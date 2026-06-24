@@ -1,0 +1,389 @@
+/* AI葉っぱ診断 — 明るい有機・ナチュラル方向
+   コンポジタフレンドリーな motion（transform/opacity）のみを使用 */
+
+:root {
+  /* 配色：葉・自然をモチーフにした緑系の温かみ（oklch） */
+  --color-bg: oklch(97% 0.02 140);
+  --color-bg-2: oklch(94% 0.04 145);
+  --color-surface: oklch(99% 0.006 140);
+  --color-text: oklch(28% 0.03 150);
+  --color-muted: oklch(52% 0.03 150);
+  --color-leaf: oklch(62% 0.14 150); /* 健康そう */
+  --color-leaf-deep: oklch(48% 0.12 150);
+  --color-caution: oklch(72% 0.15 70); /* 注意（琥珀） */
+  --color-other: oklch(64% 0.04 250); /* 対象外（くすみ青） */
+  --color-accent: oklch(66% 0.15 25); /* CTA（あたたかい朱） */
+
+  --text-lead: clamp(1rem, 0.94rem + 0.3vw, 1.15rem);
+  --text-headline: clamp(1.6rem, 1.1rem + 2.2vw, 2.6rem);
+  --text-title: clamp(1.5rem, 1rem + 2vw, 2.4rem);
+
+  --space-panel: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 10px 30px -18px oklch(48% 0.12 150 / 0.5);
+  --shadow-card: 0 18px 50px -30px oklch(40% 0.1 150 / 0.55);
+
+  --duration-fast: 150ms;
+  --duration-normal: 320ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  color: var(--color-text);
+  background: linear-gradient(160deg, var(--color-bg), var(--color-bg-2));
+  line-height: 1.7;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 背景の有機的なアトモスフィア（葉のにじみ） */
+.leaf-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(40% 50% at 12% 8%, oklch(80% 0.1 150 / 0.35), transparent 70%),
+    radial-gradient(45% 55% at 92% 90%, oklch(82% 0.09 120 / 0.3), transparent 70%);
+  pointer-events: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- ヘッダー --- */
+.site-header {
+  text-align: center;
+  padding: clamp(1.5rem, 1rem + 3vw, 3.5rem) 1.25rem 0.5rem;
+}
+
+.site-title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.4rem;
+  color: var(--color-leaf-deep);
+}
+
+.title-leaf {
+  display: inline-block;
+  transform: rotate(-8deg);
+}
+
+.site-lead {
+  font-size: var(--text-lead);
+  color: var(--color-muted);
+  margin: 0 auto;
+  max-width: 34ch;
+}
+
+/* --- レイアウト：意図的に非対称（編集的） --- */
+.layout {
+  display: grid;
+  gap: clamp(1rem, 0.5rem + 2vw, 1.75rem);
+  width: min(960px, 100% - 2rem);
+  margin: clamp(1.25rem, 1rem + 2vw, 2.5rem) auto 2rem;
+}
+
+@media (min-width: 840px) {
+  .layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-panel);
+  box-shadow: var(--shadow-card);
+  border: 1px solid oklch(90% 0.03 150 / 0.7);
+}
+
+/* --- 入力ステージ --- */
+.stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: oklch(93% 0.03 150);
+  display: grid;
+  place-items: center;
+}
+
+.stage-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stage-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 1rem;
+}
+
+.placeholder-mark {
+  font-size: 2.5rem;
+}
+
+/* --- ステータス・エラー --- */
+.status {
+  margin: 0.9rem 0 0;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  white-space: pre-line;
+}
+
+.status[data-kind="loading"] {
+  background: oklch(94% 0.04 150);
+  color: var(--color-leaf-deep);
+}
+
+.status[data-kind="error"] {
+  background: oklch(94% 0.06 25);
+  color: oklch(45% 0.16 25);
+}
+
+/* --- ボタン：状態を設計する --- */
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  flex: 1 1 auto;
+  min-height: 52px;
+  padding: 0 1.25rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    filter var(--duration-fast) var(--ease-out-expo),
+    opacity var(--duration-fast);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-leaf), var(--color-leaf-deep));
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--color-accent), oklch(58% 0.16 30));
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn:focus-visible {
+  outline: 3px solid oklch(70% 0.12 150);
+  outline-offset: 3px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.3);
+}
+
+/* --- アップロード --- */
+.upload {
+  margin-top: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-label {
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.upload-input {
+  flex: 1 1 14rem;
+}
+
+/* --- 結果パネル --- */
+.result-panel {
+  border-top: 6px solid var(--color-other);
+  animation: rise var(--duration-normal) var(--ease-out-expo) both;
+}
+
+.result-panel[data-top-class="healthy"] {
+  border-top-color: var(--color-leaf);
+}
+.result-panel[data-top-class="caution"] {
+  border-top-color: var(--color-caution);
+}
+.result-panel[data-top-class="other"] {
+  border-top-color: var(--color-other);
+}
+
+.result-eyebrow {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.result-headline {
+  margin: 0.2rem 0 0.4rem;
+  font-size: var(--text-headline);
+  font-weight: 800;
+  line-height: 1.2;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.result-percent {
+  font-size: 0.55em;
+  font-weight: 800;
+  color: var(--color-leaf-deep);
+}
+
+.result-comment {
+  margin: 0 0 1.25rem;
+  color: var(--color-muted);
+  white-space: pre-line;
+}
+
+/* --- 内訳バー --- */
+.breakdown-title {
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.breakdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 3rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.92rem;
+}
+
+.breakdown-label {
+  color: var(--color-text);
+}
+
+.breakdown-bar {
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: oklch(92% 0.02 150);
+  overflow: hidden;
+}
+
+.breakdown-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  border-radius: inherit;
+  background: var(--color-other);
+  transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.breakdown-row[data-cls="healthy"] .breakdown-fill {
+  background: var(--color-leaf);
+}
+.breakdown-row[data-cls="caution"] .breakdown-fill {
+  background: var(--color-caution);
+}
+.breakdown-row[data-cls="other"] .breakdown-fill {
+  background: var(--color-other);
+}
+
+.breakdown-percent {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+/* --- 注意書き（常時表示） --- */
+.notice {
+  width: min(960px, 100% - 2rem);
+  margin: 0 auto clamp(1.5rem, 1rem + 3vw, 3rem);
+  padding: 1rem 1.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  background: oklch(96% 0.02 150 / 0.7);
+  border: 1px dashed oklch(80% 0.05 150);
+  border-radius: var(--radius-md);
+}
+
+.notice p {
+  margin: 0;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* モーション低減 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

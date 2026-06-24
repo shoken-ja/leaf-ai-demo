@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI葉っぱ診断</title>
+    <meta
+      name="description"
+      content="葉の画像をAIが3分類で判定する、授業用の画像認識体験アプリ"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="leaf-bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <h1 class="site-title"><span class="title-leaf">🌿</span> AI葉っぱ診断</h1>
+      <p class="site-lead">
+        カメラに葉っぱを映すか、画像を選ぶと、AIが状態を判定します。
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="panel capture-panel" aria-labelledby="capture-heading">
+        <h2 id="capture-heading" class="visually-hidden">画像の入力</h2>
+
+        <div class="stage">
+          <video id="camera" class="stage-media" hidden playsinline muted></video>
+          <img id="preview" class="stage-media" alt="選択した画像のプレビュー" hidden />
+          <canvas id="capture" hidden></canvas>
+          <div class="stage-placeholder" aria-hidden="true">
+            <span class="placeholder-mark">📷</span>
+            <span>カメラを開始するか、画像を選んでください</span>
+          </div>
+        </div>
+
+        <p id="status" class="status" role="status" hidden></p>
+
+        <div class="controls">
+          <button id="start-camera" type="button" class="btn btn-primary">
+            カメラを開始
+          </button>
+          <button id="predict" type="button" class="btn btn-accent" disabled>
+            判定する
+          </button>
+        </div>
+
+        <div class="upload">
+          <label class="upload-label" for="file-input">画像で試す</label>
+          <input id="file-input" type="file" accept="image/*" class="upload-input" />
+        </div>
+      </section>
+
+      <section
+        id="result"
+        class="panel result-panel"
+        aria-labelledby="result-heading"
+        aria-live="polite"
+        hidden
+      >
+        <h2 id="result-heading" class="visually-hidden">判定結果</h2>
+        <p class="result-eyebrow">判定結果</p>
+        <p class="result-headline">
+          <span id="result-headline">—</span>
+          <span id="result-percent" class="result-percent"></span>
+        </p>
+        <p id="result-comment" class="result-comment"></p>
+
+        <p class="breakdown-title">内訳</p>
+        <ul id="breakdown" class="breakdown"></ul>
+      </section>
+    </main>
+
+    <footer class="notice" role="note">
+      <p>
+        このAIは授業用の画像認識体験アプリです。<br />
+        実際の病害虫診断や農業上の判断を行うものではありません。<br />
+        最終判断には、現場確認と専門知識が必要です。
+      </p>
+    </footer>
+
+    <!-- TensorFlow.js は同梱（CDN非依存・学校ネットワーク対策）。
+         配置: vendor/tf.min.js（マイルストーン2のモデルと合わせて用意） -->
+    <script src="vendor/tf.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
