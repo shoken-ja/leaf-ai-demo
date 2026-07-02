@@ -15,24 +15,36 @@ export function normalizeParams() {
   return { scale: 1 / 255, offset: 0 };
 }
 
-// --- 分類クラス（2分類運用：背景データ未取得のため other は不採用） ---
-export const CLASSES = ["healthy", "caution"];
+// --- 分類クラス（作物種7分類：raw/ に含まれる作物） ---
+export const CLASSES = [
+  "bell_pepper",
+  "corn",
+  "grape",
+  "olive",
+  "potato",
+  "strawberry",
+  "tomato",
+];
 
 export const CLASS_LABELS = {
-  healthy: "健康そうな葉",
-  caution: "注意が必要そうな葉",
+  bell_pepper: "ピーマン",
+  corn: "トウモロコシ",
+  grape: "ブドウ",
+  olive: "オリーブ",
+  potato: "ジャガイモ",
+  strawberry: "イチゴ",
+  tomato: "トマト",
 };
 
-// クラス別コメント（仕様書 7.4）
-export const CLASS_COMMENTS = {
-  healthy: "健康な葉の画像に近い特徴があると判定しました。",
-  caution: "変色や斑点など、注意が必要そうな葉の画像に近い特徴があると判定しました。",
-};
+// クラス別コメント（作物名からテンプレ生成）
+export const CLASS_COMMENTS = Object.fromEntries(
+  CLASSES.map((cls) => [cls, `${CLASS_LABELS[cls]}の葉の画像に近い特徴があると判定しました。`]),
+);
 
-// --- 確信度しきい値（仕様書 7.1-7.3） ---
+// --- 確信度しきい値（仕様書 7.1-7.3 を踏襲。多クラスのため最大確率で判定） ---
 export const CONFIDENCE = {
-  NORMAL: 0.7, // 70%以上 = 通常判定
-  UNSTABLE: 0.5, // 50%以上70%未満 = 不安定
+  NORMAL: 0.6, // これ以上 = 通常判定
+  UNSTABLE: 0.35, // これ以上 = 不安定（それ未満は判定不能）
 };
 
 export const CONFIDENCE_MESSAGES = {
@@ -59,17 +71,37 @@ export const ERRORS = {
 export const MODEL_URL = "model/model.json";
 export const METADATA_URL = "model/metadata.json";
 
-// metadata.json のラベル表記 → 正規ラベル（eval/labels.js と同方針）
+// ラベル名を比較用に正規化（小文字化＋区切りをアンダースコアへ統一）。
+function normalizeLabel(raw) {
+  let s = String(raw).trim().toLowerCase();
+  for (const sep of ["___", "__", " ", "-", "/"]) s = s.split(sep).join("_");
+  while (s.includes("__")) s = s.split("__").join("_");
+  return s.replace(/^_+|_+$/g, "");
+}
+
+// metadata.json のラベル表記 → 正規ラベル（eval/labels.js と同方針）。
+// Teachable Machine のクラス名は英語キー・日本語表示名のどちらでも解決できる。
 const LABEL_ALIASES = {
-  healthy: "healthy",
-  "健康そうな葉": "healthy",
-  caution: "caution",
-  "注意が必要そうな葉": "caution",
+  bell_pepper: "bell_pepper",
+  pepper: "bell_pepper",
+  ピーマン: "bell_pepper",
+  corn: "corn",
+  トウモロコシ: "corn",
+  grape: "grape",
+  ブドウ: "grape",
+  olive: "olive",
+  オリーブ: "olive",
+  potato: "potato",
+  ジャガイモ: "potato",
+  strawberry: "strawberry",
+  イチゴ: "strawberry",
+  tomato: "tomato",
+  トマト: "tomato",
 };
 
 export function resolveLabel(raw) {
   if (raw == null) throw new Error("label must not be null");
-  const key = String(raw).trim().toLowerCase();
+  const key = normalizeLabel(raw);
   if (LABEL_ALIASES[key]) return LABEL_ALIASES[key];
   for (const cls of CLASSES) if (key.includes(cls)) return cls;
   throw new Error(`未知のラベル: ${raw}`);

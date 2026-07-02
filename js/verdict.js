@@ -10,7 +10,7 @@ import {
 } from "./config.js";
 
 /**
- * @param {{healthy:number, caution:number}} probs 各クラスの確率(0-1)
+ * @param {Record<string, number>} probs 各クラス(CLASSES)の確率(0-1)
  * @returns 表示用の判定オブジェクト
  */
 export function decideVerdict(probs) {

@@ -7,7 +7,7 @@ import { INPUT_SIZE, CLASSES, normalizeParams } from "./config.js";
  * @param {tf.LayersModel} model
  * @param {string[]} indexToClass 出力index→正規ラベル
  * @param {CanvasImageSource} source canvas / video / img 要素
- * @returns {{healthy:number, caution:number}}
+ * @returns {Record<string, number>} 各クラス(CLASSES)の確率
  */
 export function predict(model, indexToClass, source) {
   const { scale, offset } = normalizeParams();
