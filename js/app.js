@@ -19,6 +19,7 @@ const els = {
   resultPercent: document.getElementById("result-percent"),
   resultComment: document.getElementById("result-comment"),
   breakdown: document.getElementById("breakdown"),
+  loadingOverlay: document.getElementById("loading-overlay"),
 };
 
 const state = {
@@ -32,6 +33,19 @@ function setStatus(message, kind = "info") {
   els.status.textContent = message;
   els.status.dataset.kind = kind;
   els.status.hidden = !message;
+}
+
+function setLoading(on) {
+  els.loadingOverlay.hidden = !on;
+  els.predictBtn.disabled = on || !state.model;
+  els.predictBtn.setAttribute("aria-busy", String(on));
+}
+
+// 次の描画フレームまで待つ。同期的な推論の前にローディングを確実に表示させる。
+function nextFrame() {
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+  );
 }
 
 async function init() {
@@ -95,14 +109,18 @@ async function onPredict() {
     return;
   }
   try {
-    setStatus("判定中…", "loading");
+    setStatus("", "info");
+    setLoading(true);
+    // ローディングを描画してから、同期的な推論（メインスレッドを塞ぐ）を実行する。
+    await nextFrame();
     const probs = predict(state.model, state.indexToClass, source);
     const verdict = decideVerdict(probs);
     renderResult(verdict);
-    setStatus("", "info");
   } catch (e) {
     console.error(e);
     setStatus(ERRORS.inference, "error");
+  } finally {
+    setLoading(false);
   }
 }
 

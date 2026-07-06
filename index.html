@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI葉っぱ図鑑</title>
+    <title>大野農業高校AI体験アプリ</title>
     <meta
       name="description"
       content="葉の画像から作物の種類をAIが当てる、授業用の画像認識体験アプリ"
@@ -31,6 +31,10 @@
           <div class="stage-placeholder" aria-hidden="true">
             <span class="placeholder-mark">📷</span>
             <span>カメラを開始するか、画像を選んでください</span>
+          </div>
+          <div id="loading-overlay" class="loading-overlay" role="status" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="loading-text">AIが判定中…</span>
           </div>
         </div>
 
@@ -75,7 +79,6 @@
       <p>
         このAIは授業用の画像認識体験アプリです。<br />
         実際の病害虫診断や農業上の判断を行うものではありません。<br />
-        最終判断には、現場確認と専門知識が必要です。
       </p>
     </footer>
 
